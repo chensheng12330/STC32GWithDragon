@@ -1,0 +1,7 @@
+".\Objects\main.obj",
+".\Objects\Seg595.obj",
+".\Objects\Delay.obj" 
+TO ".\Objects\定时器-外部计数" 
+PRINT(".\Listings\定时器-外部计数.map") CASE 
+CLASSES (EDATA (0x0-0xFFF), 
+HDATA (0x0-0xFFF)) 

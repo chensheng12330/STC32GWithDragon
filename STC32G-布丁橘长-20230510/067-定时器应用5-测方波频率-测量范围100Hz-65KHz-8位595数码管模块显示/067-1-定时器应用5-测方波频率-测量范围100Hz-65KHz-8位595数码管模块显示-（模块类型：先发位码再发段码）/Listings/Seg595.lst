@@ -1,0 +1,75 @@
+C251 COMPILER V5.60.0,  Seg595                                                             16/02/23  21:24:51  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE Seg595
+OBJECT MODULE PLACED IN .\Objects\Seg595.obj
+COMPILER INVOKED BY: D:\SoftWare\keilC251_v5.60\C251\BIN\C251.EXE Seg595.c XSMALL BROWSE DEBUG PRINT(.\Listings\Seg595.l
+                    -st) TABS(2) OBJECT(.\Objects\Seg595.obj) 
+
+stmt  level    source
+
+    1          #include "Seg595.h"
+    2          
+    3          //共阳极段码数组    0(0)  1(1)  2(2)  3(3)  4(4)  5(5)  6(6)  7(7)  8(8)  9(9)
+    4          u8 SEG_Code[26] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90,
+    5          //                  A(10) b(11) C(12) d(13) E(14) F(15) H(16) L(17) o(18 P(19)                   
+    6                              0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e, 0x89, 0xc7, 0xa3, 0x8c,
+    7          //                  q(20) U(21) 灭(22) -(23) 亮(24)
+    8                              0x98, 0xc1, 0xff, 0xbf, 0x00}; 
+    9          //共阳极位码数组-4位数码管
+   10          u8 WEI_Code[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};   //共阳极位码数组，COM1接595Q0，COM2接Q1...即
+             -数码管左边第一位接Q0...第八位接Q7
+   11          
+   12          void Write595(u8 dat)     //595写数据函数
+   13          {
+   14   1        u16 i;
+   15   1        for(i = 0;i < 8;i++)    
+   16   1        {
+   17   2          SH = 0;               //拉低串行输入时钟SCLK
+   18   2          DS = dat & 0x80;      //取最高位
+   19   2          SH = 1;               //SCKL时钟上升沿，数据存移位寄存器
+   20   2          dat <<= 1;            //每次一位
+   21   2        }
+   22   1      }
+   23          void Output595()          //595输出函数
+   24          {
+   25   1        ST = 0;                 //拉低ST时钟
+   26   1        ST = 1;                 //ST时钟上升沿，更新输出存储器数据
+   27   1      }
+   28          
+   29          void SEG_Disp(u8 dat,u8 wei)      //数码管显示函数
+   30          {
+   31   1        u8 datcode,weicode;
+   32   1        datcode = SEG_Code[dat];        //取十进制dat对应的段码
+   33   1        weicode = WEI_Code[wei-1];      //取十进制wei对应的位码
+   34   1        
+   35   1        Write595(weicode);              //先发位码
+   36   1        Write595(datcode);              //再发段码
+   37   1        Output595();                    //595输出显示
+   38   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =        59     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =        34     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        42     ------
+C251 COMPILER V5.60.0,  Seg595                                                             16/02/23  21:24:51  PAGE 2   
+
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

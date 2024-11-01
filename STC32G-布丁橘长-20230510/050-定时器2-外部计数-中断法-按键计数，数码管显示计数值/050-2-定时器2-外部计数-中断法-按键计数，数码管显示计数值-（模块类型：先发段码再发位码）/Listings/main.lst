@@ -1,0 +1,98 @@
+C251 COMPILER V5.57.0,  main                                                               21/02/23  21:55:57  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE main.c XSMALL BROWSE DEBUG PRINT(.\Listings\main.lst) TABS(2
+                    -) OBJECT(.\Objects\main.obj) 
+
+stmt  level    source
+
+    1          //    @布丁橘长 2023/02/12
+    2          //    定时器2-外部计数-中断法-P5.4按键每按一次，中断一次，number+1，数码管显示按键次数（number值）
+    3          //    定时器2外部引脚T2-P5.4
+    4          //    实验开发板：STC32G12K128-LQFP64 屠龙刀三.1 主频12MHz
+    5          
+    6          #include <STC32G.H>
+    7          #include "config.h"
+    8          #include "Seg595.h"
+    9          #include "Delay.h"
+   10          
+   11          sbit LED1 = P2^0;   //引脚定义：LED1->P20
+   12          sbit LED2 = P2^1;   //引脚定义：LED2->P21
+   13          sbit LED3 = P2^2;   //引脚定义：LED3->P22
+   14          sbit LED4 = P2^3;   //引脚定义：LED4->P23
+   15          sbit LED5 = P2^4;   //引脚定义：LED5->P24
+   16          sbit LED6 = P2^5;   //引脚定义：LED6->P25
+   17          sbit LED7 = P2^6;   //引脚定义：LED7->P26
+   18          sbit LED8 = P2^7;   //引脚定义：LED8->P27
+   19          
+   20          void Timer2_Init(void);   //定时器0初始化函数声明
+   21          
+   22          u8 number;        //计数值
+   23          
+   24          void main()
+   25          { 
+   26   1        EAXFR = 1;      // 使能访问 XFR
+   27   1        CKCON = 0x00;   // 设置外部数据总线速度为最快
+   28   1        WTST = 0x00;    // 设置程序代码等待参数，等待时间为0个时钟，CPU执行程序速度最快
+   29   1      
+   30   1        P0M1 = 0x00;P0M0 = 0x00;    //设置P0口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   31   1        P1M1 = 0x00;P1M0 = 0x00;    //设置P1口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   32   1        P2M1 = 0x00;P2M0 = 0x00;    //设置P2口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   33   1        P3M1 = 0x00;P3M0 = 0x00;    //设置P3口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   34   1        P4M1 = 0x00;P4M0 = 0x00;    //设置P4口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   35   1        P5M1 = 0x00;P5M0 = 0x00;    //设置P5口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   36   1        P6M1 = 0x00;P6M0 = 0x00;    //设置P6口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   37   1        P7M1 = 0x00;P7M0 = 0x00;    //设置P7口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   38   1        
+   39   1        Timer2_Init();
+   40   1        EA = 1;           //使能总中断
+   41   1        
+   42   1        while(1)
+   43   1        {
+   44   2          SEG_Disp((u8)(number/10),7);
+   45   2          delayms(1);
+   46   2          SEG_Disp((u8)(number%10),8);
+   47   2          delayms(1);
+   48   2        }   
+   49   1      }
+   50          
+   51          void Timer2_Isr(void) interrupt 12
+   52          {
+   53   1        number++;
+   54   1      }
+   55          void Timer2_Init(void)
+   56          {
+   57   1        T2_CT = 1;        //设置定时器2-外部计数模式
+   58   1        T2L = 0xFF;       //设置定时初始值
+C251 COMPILER V5.57.0,  main                                                               21/02/23  21:55:57  PAGE 2   
+
+   59   1        T2H = 0xFF;       //设置定时初始值（计数1次就溢出，中断）
+   60   1        T2R = 1;          //定时器2开始计数
+   61   1        ET2 = 1;          //使能定时器2中断
+   62   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       141     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =         1     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

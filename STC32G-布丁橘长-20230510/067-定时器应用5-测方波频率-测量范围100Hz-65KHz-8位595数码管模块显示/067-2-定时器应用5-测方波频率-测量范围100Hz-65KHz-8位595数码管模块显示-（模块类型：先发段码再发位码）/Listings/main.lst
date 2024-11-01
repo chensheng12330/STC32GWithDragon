@@ -1,0 +1,119 @@
+C251 COMPILER V5.57.0,  main                                                               21/02/23  22:13:33  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE main.c XSMALL BROWSE DEBUG PRINT(.\Listings\main.lst) TABS(2
+                    -) OBJECT(.\Objects\main.obj) 
+
+stmt  level    source
+
+    1          //    @布丁橘长 2023/02/14
+    2          //    使用定时器0-模式0-1T模式-预分频直接定时1秒
+    3          //    8位共阳极数码管模块-74HC595级联驱动：第1、2位显示0-99计时，第7、8位显示99-0倒计时
+    4          //    数码管模块引脚定义：DS(DIO):P6.6 SH(SCK):P6.5 ST(RCK):P6.4
+    5          //    实验开发板：STC32G12K128-LQFP64 屠龙刀三.1 主频12MHz
+    6          
+    7          #include <STC32G.H>
+    8          #include "config.h"
+    9          #include "seg595.h"
+   10          
+   11          void Timer0_Init(void);   //定时器0初始化函数声明
+   12          void Timer1_Init(void);   //定时器1初始化函数声明
+   13          
+   14          u16 number;       //数码管显示的数字
+   15          u16 freq;
+   16          u8 keypress;
+   17          void main()
+   18          { 
+   19   1        EAXFR = 1;      // 使能访问 XFR
+   20   1        CKCON = 0x00;   // 设置外部数据总线速度为最快
+   21   1        WTST = 0x00;    // 设置程序代码等待参数，等待时间为0个时钟，CPU执行程序速度最快
+   22   1      
+   23   1        P0M1 = 0x00;P0M0 = 0x00;    //设置P0口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   24   1        P1M1 = 0x00;P1M0 = 0x00;    //设置P1口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   25   1        P2M1 = 0x00;P2M0 = 0x00;    //设置P2口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   26   1        P3M1 = 0x00;P3M0 = 0x00;    //设置P3口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   27   1        P4M1 = 0x00;P4M0 = 0x00;    //设置P4口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   28   1        P5M1 = 0x00;P5M0 = 0x00;    //设置P5口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   29   1        P6M1 = 0x00;P6M0 = 0x00;    //设置P6口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   30   1        P7M1 = 0x00;P7M0 = 0x00;    //设置P7口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   31   1        
+   32   1        Timer0_Init();    //定时器0初始化
+   33   1        Timer1_Init();    //定时器0初始化
+   34   1        EA = 1;           //使能总中断  
+   35   1        while(1)
+   36   1        {
+   37   2          if(P32 == 0 && keypress == 0) //按P3.2开始测量
+   38   2          {
+   39   3            keypress = 1;
+   40   3            number = 0;
+   41   3            TR1 = 1;
+   42   3            TR0 = 1;
+   43   3          }
+   44   2          if(P32 == 1) keypress = 0;
+   45   2          freq = number*10;
+   46   2          SEG_Disp(15,1);   //F
+   47   2          SEG_Disp(23,2);   //- 
+   48   2          SEG_Disp((u16)(freq/10000%10),4);       //频率万位
+   49   2          SEG_Disp((u16)(freq/1000%10),5);        //千位
+   50   2          SEG_Disp((u16)(freq/100%10),6);         //百位
+   51   2          SEG_Disp((u16)(freq/10%10),7);          //十位
+   52   2          SEG_Disp((u16)(freq%10),8);             //个位
+   53   2        }
+   54   1      }
+   55          void Timer0_Isr(void) interrupt 1   
+   56          {
+   57   1        number++;
+   58   1      }
+C251 COMPILER V5.57.0,  main                                                               21/02/23  22:13:33  PAGE 2   
+
+   59          
+   60          void Timer0_Init(void)    
+   61          {
+   62   1        TMOD = 0x04;            //定时器0-模式1-16位不自动重装模式-计数模式
+   63   1        TL0 = 0xFF;             //设置定时初始值
+   64   1        TH0 = 0xFF;             //设置定时初始值
+   65   1        TF0 = 0;                //清除TF0标志
+   66   1        ET0 = 1;                //使能定时器0中断
+   67   1      }
+   68          void Timer1_Isr(void) interrupt 3
+   69          {
+   70   1        TR0 = 0;
+   71   1        TR1 = 0;
+   72   1      }
+   73          void Timer1_Init(void)    //100毫秒@12.000MHz
+   74          {
+   75   1        TM1PS = 0x12;     //设置定时器时钟预分频 ( 注意:并非所有系列都有此寄存器,详情请查看数据手册 )
+   76   1        AUXR |= 0x40;     //定时器时钟1T模式
+   77   1        TMOD &= 0x0F;     //设置定时器模式
+   78   1        TL1 = 0x4A;       //设置定时初始值
+   79   1        TH1 = 0x09;       //设置定时初始值
+   80   1        TF1 = 0;        //清除TF1标志
+   81   1        TR1 = 1;        //定时器1开始计时
+   82   1        ET1 = 1;        //使能定时器1中断
+   83   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       320     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =         5     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,1 @@
+"irs.asm" MODSRC INTR2 SET (XSMALL) DEBUG PRINT(.\Listings\irs.lst) OBJECT(.\Objects\irs.obj) EP

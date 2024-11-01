@@ -1,0 +1,44 @@
+C251 COMPILER V5.57.0,  Delay                                                              21/02/23  21:56:19  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE Delay
+OBJECT MODULE PLACED IN .\Objects\Delay.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE Delay.c XSMALL BROWSE DEBUG PRINT(.\Listings\Delay.lst) TABS
+                    -(2) OBJECT(.\Objects\Delay.obj) 
+
+stmt  level    source
+
+    1          #include <delay.h>
+    2          
+    3          void  delayms(u16 ms)   //简单延时函数，自适应主频，1毫秒*ms
+    4          {
+    5   1        u16 i;
+    6   1        do{
+    7   2            i = MAIN_Fosc / 6000;
+    8   2            while(--i);
+    9   2          }while(--ms);
+   10   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =        23     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

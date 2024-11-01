@@ -1,0 +1,69 @@
+C251 COMPILER V5.57.0,  MAX7219                                                            15/03/23  21:09:12  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE MAX7219
+OBJECT MODULE PLACED IN .\Objects\MAX7219.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE MAX7219.c XSMALL BROWSE DEBUG PRINT(.\Listings\MAX7219.lst) 
+                    -TABS(2) OBJECT(.\Objects\MAX7219.obj) 
+
+stmt  level    source
+
+    1          #include "MAX7219.h"
+    2          #include "config.h"
+    3          
+    4          //地址、数据发送子程序
+    5          void Write7219(unsigned char address,unsigned char dat)
+    6          {  
+    7   1          unsigned char i;
+    8   1          CS=0;    //拉低片选线，选中器件
+    9   1          //发送地址
+   10   1          for (i=0;i<8;i++)        //移位循环8次             
+   11   1          {  
+   12   2             CLK=0;        //清零时钟总线
+   13   2             DIN=(bit)(address&0x80); //每次取高字节     
+   14   2             address<<=1;             //左移一位
+   15   2             CLK=1;        //时钟上升沿，发送地址
+   16   2          }
+   17   1          //发送数据
+   18   1          for (i=0;i<8;i++)              
+   19   1          {  
+   20   2             CLK=0;
+   21   2             DIN=(bit)(dat&0x80);    
+   22   2             dat<<=1; 
+   23   2             CLK=1;        //时钟上升沿，发送数据
+   24   2          }
+   25   1          CS=1;    //发送结束，上升沿锁存数据                      
+   26   1      }
+   27          //MAX7219初始化，设置MAX7219内部的控制寄存器
+   28          void MAX7219_Ini(void)                
+   29          {
+   30   1          Write7219(SHUT_DOWN,0x01);         //开启正常工作模式（0xX1）
+   31   1          Write7219(DISPLAY_TEST,0x00);      //选择工作模式（0xX0）
+   32   1          Write7219(DECODE_MODE,0xff);       //选用全译码模式
+   33   1          Write7219(SCAN_LIMIT,0x07);        //8只LED全用
+   34   1          Write7219(INTENSITY,0x0A);         //设置初始亮度
+   35   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =        88     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

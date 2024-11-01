@@ -1,0 +1,45 @@
+[Version]
+Signature = "$Windows NT$"
+Class     = USBDevice
+ClassGUID = {88BAE032-5A81-49f0-BC3D-A4FF138216D6}
+Provider  = %COMPANY%
+CatalogFile = stcwinusb.cat
+DriverVer=11/18/2021,1.0.0.0
+
+[Manufacturer]
+%COMPANY% = Standard,NTamd64
+
+[Standard]
+%DeviceName% =USB_Install, USB\VID_34BF&PID_FF05
+
+[Standard.NTamd64]
+%DeviceName% =USB_Install, USB\VID_34BF&PID_FF05
+
+[ClassInstall32]
+AddReg = ClassInstall_AddReg
+
+[ClassInstall_AddReg]
+HKR,,,,%ClassName%
+HKR,,NoInstallClass,,1
+HKR,,IconPath,%REG_MULTI_SZ%,"%systemroot%\system32\setupapi.dll,-20"
+HKR,,LowerLogoVersion,,5.2
+
+[USB_Install]
+Include = winusb.inf
+Needs   = WINUSB.NT
+
+[USB_Install.Services]
+Include =winusb.inf
+Needs   = WINUSB.NT.Services
+
+[USB_Install.HW]
+AddReg=Dev_AddReg
+
+[Dev_AddReg]
+HKR,,DeviceInterfaceGUIDs,0x10000,"{F72FE0D4-CBCB-407d-8814-9ED673D0DD6B}"
+
+[Strings]
+COMPANY="STC"
+ClassName="Universal Serial Bus devices"
+DeviceName="STC-WINUSB"
+REG_MULTI_SZ = 0x00010000

@@ -1,0 +1,160 @@
+C251 COMPILER V5.57.0,  key_multi                                                          14/02/23  23:08:56  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE key_multi
+OBJECT MODULE PLACED IN .\Objects\key_multi.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilARM\C251\BIN\C251.EXE key_multi.c XSMALL BROWSE DEBUG PRINT(.\Listings\key_multi.ls
+                    -t) TABS(2) OBJECT(.\Objects\key_multi.obj) 
+
+stmt  level    source
+
+    1          //¶à¹¦ÄÜ°´¼üº¯Êý£¬ÊµÏÖ°´¼ü£ºµ¥»÷¡¢Ë«»÷¡¢³¤°´
+    2          //Õ¼ÓÃ¶¨Ê±Æ÷4£¬ÐèÒªÔÚÖ÷º¯Êý¶Ô¶¨Ê±Æ÷4³õÊ¼»¯£ºTimer4_Init();²¢Ê¹ÄÜÖÐ¶ÏEA=1
+    3          
+    4          #include <STC32G.H>
+    5          #include "key_multi.h"
+    6          #include "config.h"
+    7          
+    8          static u8 keynumber;
+    9          static u8 key_state;                  //°´¼ü×´Ì¬±äÁ¿
+   10          static u16 key_time;                  //°´¼ü¼ÆÊ±±äÁ¿
+   11          static u8 key_press_nums;             //°´¼ü´ÎÊý±äÁ¿    
+   12          static u16 key_time_double;           //°´¼üË«»÷Ê±¼ä
+   13          static u8 keynum;                     //¼üÖµ
+   14          static u8 new_keynum;                 //ÐÂµÄ¼üÖµ
+   15          u8 key_press, key_return;             //¼üÖµºÍ·µ»ØÖµ
+   16            
+   17          void Timer4_Isr(void) interrupt 20
+   18          {
+   19   1        TL0 = 0xA0;       //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   20   1        TH0 = 0x15;       //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   21   1        key_time++; 
+   22   1        if(key_press_nums > 0)
+   23   1        {
+   24   2          key_time_double++;
+   25   2          if((key_time_double >DOUBLE_KEY_TIME )&&( key_time_double< LONG_KEY_TIME))  key_state = KEY_STATE_2;  
+   26   2        }
+   27   1      }
+   28          void Timer4_Init(void)    //10ºÁÃë@12.000MHz
+   29          {
+   30   1        TM4PS = 0x01;     //ÉèÖÃ¶¨Ê±Æ÷Ê±ÖÓÔ¤·ÖÆµ ( ×¢Òâ:²¢·ÇËùÓÐÏµÁÐ¶¼ÓÐ´Ë¼Ä´æÆ÷,ÏêÇéÇë²é¿´Êý¾ÝÊÖ²á )
+   31   1        T4T3M |= 0x20;      //¶¨Ê±Æ÷Ê±ÖÓ1TÄ£Ê½
+   32   1        T4L = 0xA0;       //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   33   1        T4H = 0x15;       //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+   34   1        T4T3M |= 0x80;      //¶¨Ê±Æ÷4¿ªÊ¼¼ÆÊ±
+   35   1        IE2 |= 0x40;      //Ê¹ÄÜ¶¨Ê±Æ÷4ÖÐ¶Ï
+   36   1      }
+   37          
+   38          u8 key_multi(void)
+   39          { 
+   40   1        key_return = None_click;                  //Çå³ý·µ»Ø°´¼üÖµ
+   41   1        if(!KEY1) {key_press = KEY1;new_keynum = 1;}                  
+   42   1        else if(!KEY2) {key_press = KEY2;new_keynum = 2;}             
+   43   1        else if(!KEY3) {key_press = KEY3;new_keynum = 3;}             
+   44   1        else if(!KEY4) {key_press = KEY4;new_keynum = 4;}             
+   45   1        else key_press = 1;
+   46   1          
+   47   1        switch (key_state)
+   48   1        {
+   49   2          case KEY_STATE_0:                       //°´¼ü×´Ì¬0£ºÅÐ¶ÏÓÐÎÞ°´¼ü°´ÏÂ
+   50   2          {
+   51   3            if (!key_press)                       //ÓÐ°´¼ü°´ÏÂ
+   52   3            {
+   53   4              key_time = 0;                       //ÇåÁãÊ±¼ä¼ä¸ô¼ÆÊý
+   54   4              
+   55   4              key_state = KEY_STATE_1;            //È»ºó½øÈë °´¼ü×´Ì¬1
+   56   4            }
+   57   3          }break;
+   58   2          case KEY_STATE_1:                       //°´¼ü×´Ì¬1£ºÈí¼þÏû¶¶(È·¶¨°´¼üÊÇ·ñÓÐÐ§£¬¶ø²»ÊÇÎó´¥)¡£°´¼üÓÐÐ§µÄ¶¨Òå£º°´¼ü³
+C251 COMPILER V5.57.0,  key_multi                                                          14/02/23  23:08:56  PAGE 2   
+
+             -ÖÐø°´ÏÂ³¬¹ýÉè¶¨µÄÏû¶¶Ê±¼ä¡£
+   59   2          {
+   60   3            if (!key_press)
+   61   3            {
+   62   4              TR0 = 1;
+   63   4              if(key_time>=SINGLE_KEY_TIME )      //Ïû¶¶Ê±¼äÎª£ºSINGLE_KEY_TIME*10ms = 10ms;
+   64   4              {
+   65   5                key_state = KEY_STATE_2;          //Èç¹û°´¼üÊ±¼ä³¬¹ý Ïû¶¶Ê±¼ä£¬¼´ÅÐ¶¨Îª°´ÏÂµÄ°´¼üÓÐÐ§¡£½øÈë°´¼ü×´Ì¬2£¬¼Ì
+             -ÐøÅÐ¶¨µ½µ×ÊÇµ¥»÷¡¢Ë«»÷»¹ÊÇ³¤°´
+   66   5                key_press_nums++;                 //°´¼ü´ÎÊý+1
+   67   5              }
+   68   4            }
+   69   3            else key_state = KEY_STATE_0;         //Èç¹û°´¼üÊ±¼äÃ»ÓÐ³¬¹ý£¬ÅÐ¶¨ÎªÎó´¥£¬°´¼üÎÞÐ§£¬·µ»Ø °´¼ü×´Ì¬0£¬¼ÌÐøµÈ
+             -´ý°´¼ü
+   70   3          }break;
+   71   2          case KEY_STATE_2:                       //°´¼ü×´Ì¬2£ºÅÐ¶¨°´¼üÓÐÐ§µÄÖÖÀà£ºÊÇµ¥»÷£¬Ë«»÷£¬»¹ÊÇ³¤°´
+   72   2          {
+   73   3            if(key_press)                         //Èç¹û°´¼üÔÚ Éè¶¨µÄË«»÷Ê±¼äÄÚÊÍ·Å£¬ÔòÅÐ¶¨Îªµ¥»÷/Ë«»÷
+   74   3            {
+   75   4              if(key_time_double <= DOUBLE_KEY_TIME ) key_state = KEY_STATE_0;            //Ë«»÷Ê±¼ä´ïµ½Ç°£¬ÔÙ´ÎÉ¨Ãè°´¼ü
+   76   4              if((key_time_double >DOUBLE_KEY_TIME )&&( key_time_double< LONG_KEY_TIME))  //´ïµ½Ë«»÷Éè¶¨Ê±¼äºó
+   77   4              {
+   78   5                if(key_press_nums == 1)
+   79   5                { TR0 = 0;key_return = Single_click + new_keynum*10;
+   80   6                  key_state = KEY_STATE_0;          //·µ»Ø °´¼ü×´Ì¬0£¬¼ÌÐøµÈ´ý°´¼ü
+   81   6                key_press_nums = 0;               //Çå¿Õ°´¼ü´ÎÊý
+   82   6                key_time_double = 0;              //Çå¿ÕË«»÷¼ÆÊ±
+   83   6                }       //·µ»ØÓÐÐ§°´¼üÖµ£ºµ¥»÷
+   84   5                else if(key_press_nums >=2 && new_keynum == keynum) 
+   85   5                {
+   86   6                TR0 = 0;key_return = Double_click + new_keynum*10;
+   87   6                key_state = KEY_STATE_0;          //·µ»Ø °´¼ü×´Ì¬0£¬¼ÌÐøµÈ´ý°´¼ü
+   88   6                key_press_nums = 0;               //Çå¿Õ°´¼ü´ÎÊý
+   89   6                key_time_double = 0;              //Çå¿ÕË«»÷¼ÆÊ±
+   90   6                }//·µ»ØÓÐÐ§°´¼üÖµ£ºË«»÷
+   91   5              }
+   92   4            }
+   93   3            else
+   94   3            { 
+   95   4              if(key_time >= LONG_KEY_TIME)       //Èç¹û°´¼üÊ±¼ä³¬¹ý Éè¶¨µÄ³¤°´Ê±¼ä(LONG_KEY_TIME*10ms=80*10ms=800ms),
+             - ÔòÅÐ¶¨Îª ³¤°´
+   96   4              {
+   97   5                TR0 = 0;
+   98   5                key_return = Long_click + new_keynum*10;  //·µ»ØÓÐÐ§¼üÖµÖµ£º³¤°´
+   99   5                key_state = KEY_STATE_3;          //È¥×´Ì¬3£¬µÈ´ý°´¼üÊÍ·Å
+  100   5              }
+  101   4            }
+  102   3          }break;
+  103   2          case KEY_STATE_3:                       //µÈ´ý°´¼üÊÍ·Å
+  104   2          {
+  105   3            if (key_press)
+  106   3            {
+  107   4              key_state = KEY_STATE_0;            //°´¼üÊÍ·Åºó£¬½øÈë °´¼ü×´Ì¬0 £¬½øÐÐÏÂÒ»´Î°´¼üµÄÅÐ¶¨
+  108   4              key_press_nums = 0;                 //Çå¿Õ°´¼ü´ÎÊý
+  109   4              key_time_double=0;
+  110   4              TR0 = 0;
+  111   4            }
+  112   3          }break;
+  113   2          default:{key_state = KEY_STATE_0;}break;  //ÌØÊâÇé¿ö£ºkey_stateÊÇÆäËûÖµµÃÇé¿ö£¬ÇåÁãkey_state¡£ÕâÖÖÇé¿öÒ»
+             -°ã³öÏÖÔÚ Ã»ÓÐ³õÊ¼»¯key_state£¬µÚÒ»´ÎÖ´ÐÐÕâ¸öº¯ÊýµÄÊ±ºò
+  114   2        }
+  115   1        keynum = new_keynum;                      //½«ÐÂ»ñÈ¡µÄ¼üÖµ¸³Öµ¸ø¼üÖµ
+  116   1        return key_return;                        //·µ»Ø °´¼üÖµ
+  117   1      }
+
+
+C251 COMPILER V5.57.0,  key_multi                                                          14/02/23  23:08:56  PAGE 3   
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       466     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =        11     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

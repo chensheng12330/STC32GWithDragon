@@ -1,0 +1,8 @@
+".\Objects\main.obj",
+".\Objects\Delay.obj",
+".\Objects\Seg595.obj" 
+TO ".\Objects\模块化编程" 
+PRINT(".\Listings\模块化编程.map") CASE 
+REMOVEUNUSED 
+CLASSES (EDATA (0x0-0xFFF), 
+HDATA (0x0-0xFFF)) 

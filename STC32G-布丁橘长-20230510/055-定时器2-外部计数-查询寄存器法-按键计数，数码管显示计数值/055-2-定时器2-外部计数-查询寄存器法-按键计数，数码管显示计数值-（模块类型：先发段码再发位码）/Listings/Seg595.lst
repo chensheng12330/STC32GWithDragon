@@ -1,0 +1,74 @@
+C251 COMPILER V5.57.0,  Seg595                                                             21/02/23  21:57:15  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE Seg595
+OBJECT MODULE PLACED IN .\Objects\Seg595.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE Seg595.c XSMALL BROWSE DEBUG PRINT(.\Listings\Seg595.lst) TA
+                    -BS(2) OBJECT(.\Objects\Seg595.obj) 
+
+stmt  level    source
+
+    1          #include <Seg595.h>
+    2          
+    3          //共阳极段码数组
+    4          u8 SEG_Code[13] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,   //共阳数码管段码：0~9,  
+    5                              0xff,0xbf,0x00};  //数码管全灭（10），横杆-（11），数码管全亮（12）
+    6          //共阳极位码数组-4位数码管
+    7          //u8 WEI_Code[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};   //共阳极位码数组，COM1接595Q0，COM2接Q1...
+             -即数码管左边第一位接Q0...第八位接Q7
+    8          u8 WEI_Code[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};   //共阳极位码数组，COM1接595Q7，COM2接Q6...即
+             -数码管左边第一位接Q7...第八位接Q0
+    9          
+   10          void Write595(u8 dat)     //595写数据函数
+   11          {
+   12   1        u16 i;
+   13   1        for(i = 0;i < 8;i++)    
+   14   1        {
+   15   2          SH = 0;               //拉低串行输入时钟SCLK
+   16   2          DS = dat & 0x80;      //取最高位
+   17   2          SH = 1;               //SCKL时钟上升沿，数据存移位寄存器
+   18   2          dat <<= 1;            //每次一位
+   19   2        }
+   20   1      }
+   21          void Output595()          //595输出函数
+   22          {
+   23   1        ST = 0;                 //拉低ST时钟
+   24   1        ST = 1;                 //ST时钟上升沿，更新输出存储器数据
+   25   1      }
+   26          
+   27          void SEG_Disp(u8 dat,u8 wei)      //数码管显示函数
+   28          {
+   29   1        u8 datcode,weicode;
+   30   1        datcode = SEG_Code[dat];        //取十进制dat对应的段码
+   31   1        weicode = WEI_Code[wei-1];      //取十进制wei对应的位码
+   32   1        
+   33   1        Write595(datcode);              //先发段码
+   34   1        Write595(weicode);              //再发位码
+   35   1        Output595();                    //595输出显示
+   36   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =        51     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =        21     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        29     ------
+End of Module Information.
+
+C251 COMPILER V5.57.0,  Seg595                                                             21/02/23  21:57:15  PAGE 2   
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

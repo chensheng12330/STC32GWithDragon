@@ -1,0 +1,7 @@
+".\Objects\main.obj",
+".\Objects\MAX7219.obj" 
+TO ".\Objects\PWM1" 
+PRINT(".\Listings\PWM1.map") CASE 
+REMOVEUNUSED 
+CLASSES (EDATA (0x0-0xFFF), 
+HDATA (0x0-0xFFF)) 

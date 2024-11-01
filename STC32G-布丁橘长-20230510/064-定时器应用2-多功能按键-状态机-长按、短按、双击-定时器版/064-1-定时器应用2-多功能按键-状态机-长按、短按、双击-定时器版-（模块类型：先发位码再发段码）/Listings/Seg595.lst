@@ -1,0 +1,70 @@
+C251 COMPILER V5.57.0,  Seg595                                                             14/02/23  23:00:32  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE Seg595
+OBJECT MODULE PLACED IN .\Objects\Seg595.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilARM\C251\BIN\C251.EXE Seg595.c XSMALL BROWSE DEBUG PRINT(.\Listings\Seg595.lst) TAB
+                    -S(2) OBJECT(.\Objects\Seg595.obj) 
+
+stmt  level    source
+
+    1          #include "Seg595.h"
+    2          
+    3          //共阳极段码数组
+    4          u8 SEG_Code[13] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,   //共阳数码管段码：0~9,  
+    5                              0xff,0xbf,0x00};  //数码管全灭（10），横杆-（11），数码管全亮（12）
+    6          //共阳极位码数组-4位数码管
+    7          u8 WEI_Code[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};   //共阳极位码数组，COM1接595Q0，COM2接Q1...即
+             -数码管左边第一位接Q0...第八位接Q7
+    8          
+    9          void Write595(u8 dat)     //595写数据函数
+   10          {
+   11   1        u16 i;
+   12   1        for(i = 0;i < 8;i++)    
+   13   1        {
+   14   2          SH = 0;               //拉低串行输入时钟SCLK
+   15   2          DS = dat & 0x80;      //取最高位
+   16   2          SH = 1;               //SCKL时钟上升沿，数据存移位寄存器
+   17   2          dat <<= 1;            //每次一位
+   18   2        }
+   19   1      }
+   20          void Output595()          //595输出函数
+   21          {
+   22   1        ST = 0;                 //拉低ST时钟
+   23   1        ST = 1;                 //ST时钟上升沿，更新输出存储器数据
+   24   1      }
+   25          
+   26          void SEG_Disp(u8 dat,u8 wei)      //数码管显示函数
+   27          {
+   28   1        u8 datcode,weicode;
+   29   1        datcode = SEG_Code[dat];        //取十进制dat对应的段码
+   30   1        weicode = WEI_Code[wei-1];      //取十进制wei对应的位码
+   31   1        
+   32   1        Write595(weicode);              //先发位码
+   33   1        Write595(datcode);              //再发段码
+   34   1        Output595();                    //595输出显示
+   35   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =        51     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =        21     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        29     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

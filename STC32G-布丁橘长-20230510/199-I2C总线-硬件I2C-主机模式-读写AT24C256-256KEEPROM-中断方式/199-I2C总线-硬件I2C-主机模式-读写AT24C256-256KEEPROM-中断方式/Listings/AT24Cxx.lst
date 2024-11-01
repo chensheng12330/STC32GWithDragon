@@ -1,0 +1,240 @@
+C251 COMPILER V5.57.0,  AT24Cxx                                                            10/05/23  03:12:22  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE AT24Cxx
+OBJECT MODULE PLACED IN .\Objects\AT24Cxx.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE AT24Cxx.c XSMALL INTR2 BROWSE DEBUG PRINT(.\Listings\AT24Cxx
+                    -.lst) TABS(2) OBJECT(.\Objects\AT24Cxx.obj) 
+
+stmt  level    source
+
+    1          #include "AT24Cxx.h"
+    2          
+    3          void EEPROM_WriteAbyte(u8 addrH,u8 addrL, u8 dat) 
+    4          {
+    5   1        I2C_Start();              // 起始信号
+    6   1        I2C_WriteAbyte(SLAW);     // 发送从设备地址+写
+    7   1        I2C_Check_ACK();          // 等待应答
+    8   1        I2C_WriteAbyte(addrH);    // 写存储地址高8位
+    9   1        I2C_Check_ACK();          // 等待应答
+   10   1        I2C_WriteAbyte(addrL);    // 写存储地址低8位
+   11   1        I2C_Check_ACK();          // 等待应答
+   12   1        I2C_WriteAbyte(dat);      // 写1字节数据
+   13   1        I2C_Check_ACK();          // 等待应答
+   14   1        I2C_Stop();               // 发送结束信号
+   15   1      }
+   16          
+   17          u8 EEPROM_ReadAbyte(u8 addrH,u8 addrL)
+   18          {
+   19   1        u8 dat;
+   20   1        
+   21   1        I2C_Start();              // 起始信号
+   22   1        I2C_WriteAbyte(SLAW);     // 发送从设备地址+写
+   23   1        I2C_Check_ACK();          // 等待应答
+   24   1        I2C_WriteAbyte(addrH);    // 写存储地址高8位
+   25   1        I2C_Check_ACK();          // 等待应答
+   26   1        I2C_WriteAbyte(addrL);    // 写存储地址低8位
+   27   1        I2C_Check_ACK();          // 等待应答
+   28   1              
+   29   1        I2C_Start();              // 起始信号
+   30   1        I2C_WriteAbyte(SLAR);     // 发送从设备地址+读
+   31   1        I2C_Check_ACK();          // 等待应答
+   32   1        dat = I2C_ReadAbyte();    // 读1字节数据
+   33   1        S_NoACK();                // 发送非应答信号
+   34   1        I2C_Stop();               // 停止信号
+   35   1        return dat;
+   36   1      }
+   37          
+   38          void EEPROM_WriteNbyte(u8 addrH,u8 addrL, u8 *p, u8 number)          /*  WordAddress,1st Data Address,2nd
+             - Data Address,Byte lenth   */
+   39                                                                      //F0=0,right, F0=1,error
+   40          {
+   41   1          I2C_Start();
+   42   1          I2C_WriteAbyte(SLAW);
+   43   1          I2C_Check_ACK();
+   44   1          if(!F0)
+   45   1          {
+   46   2              I2C_WriteAbyte(addrH);
+   47   2              I2C_Check_ACK();
+   48   2              I2C_WriteAbyte(addrL);
+   49   2              I2C_Check_ACK();
+   50   2              if(!F0)
+   51   2              {
+   52   3                  do
+   53   3                  {
+   54   4                      I2C_WriteAbyte(*p);     p++;
+   55   4                      I2C_Check_ACK();
+   56   4                      if(F0)  break;
+   57   4                  }
+C251 COMPILER V5.57.0,  AT24Cxx                                                            10/05/23  03:12:22  PAGE 2   
+
+   58   3                  while(--number);
+   59   3              }
+   60   2          }
+   61   1          I2C_Stop();
+   62   1      }
+   63          
+   64          /****************************/
+   65          void EEPROM_ReadNbyte(u8 addrH, u8 addrL, u8 *p, u8 number)       /*  WordAddress,1st Data Address,2nd Da
+             -ta Address,Byte lenth   */
+   66          {
+   67   1          I2C_Start();
+   68   1          I2C_WriteAbyte(SLAW);
+   69   1          I2C_Check_ACK();
+   70   1          if(!F0)
+   71   1          {
+   72   2              I2C_WriteAbyte(addrH);
+   73   2              I2C_Check_ACK();
+   74   2              I2C_WriteAbyte(addrL);
+   75   2              I2C_Check_ACK();
+   76   2              if(!F0)
+   77   2              {
+   78   3                  I2C_Start();
+   79   3                  I2C_WriteAbyte(SLAR);
+   80   3                  I2C_Check_ACK();
+   81   3                  if(!F0)
+   82   3                  {
+   83   4                      do
+   84   4                      {
+   85   5                          *p = I2C_ReadAbyte();   p++;
+   86   5                          if(number != 1)     S_ACK();    //send ACK
+   87   5                      }
+   88   4                      while(--number);
+   89   4                      S_NoACK();          //send no ACK
+   90   4                  }
+   91   3              }
+   92   2          }
+   93   1          I2C_Stop();
+   94   1      }
+   95          //===========================写入1字节函数===该函数只适用于1K 2K EEPROM（AT24C01、AT24C02）==============
+             -==============
+   96          /*
+   97          void EEPROM_WriteAbyte(u8 addr, u8 dat) 
+   98          {
+   99            I2C_Start();              // 起始信号
+  100            I2C_WriteAbyte(SLAW);     // 发送从设备地址+写
+  101            I2C_Check_ACK();          // 等待应答
+  102            I2C_WriteAbyte(addr);     // 写存储地址
+  103            I2C_Check_ACK();          // 等待应答
+  104            I2C_WriteAbyte(dat);      // 写1字节数据
+  105            I2C_Check_ACK();          // 等待应答
+  106            I2C_Stop();               // 发送结束信号
+  107          }
+  108          */
+  109          //=======================================================================================================
+             -==============
+  110          //===========================读取1字节函数===该函数只适用于1K 2K EEPROM（AT24C01、AT24C02）==============
+             -==============
+  111          /*
+  112          u8 EEPROM_ReadAbyte(u8 addr)
+  113          {
+  114            u8 dat;
+  115            
+  116            I2C_Start();              // 起始信号
+  117            I2C_WriteAbyte(SLAW);     // 发送从设备地址+写
+  118            I2C_Check_ACK();          // 等待应答
+  119            I2C_WriteAbyte(addr);   // 写存储地址
+C251 COMPILER V5.57.0,  AT24Cxx                                                            10/05/23  03:12:22  PAGE 3   
+
+  120            I2C_Check_ACK();          // 等待应答
+  121                  
+  122            I2C_Start();              // 起始信号
+  123            I2C_WriteAbyte(SLAR);     // 发送从设备地址+读
+  124            I2C_Check_ACK();          // 等待应答
+  125            dat = I2C_ReadAbyte();    // 读1字节数据
+  126            S_NoACK();                // 发送非应答信号
+  127            I2C_Stop();               // 停止信号
+  128            return dat;
+  129          }
+  130          */
+  131          //=======================================================================================================
+             -================
+  132          //===========================多字节写入函数===该函数只适用于1K 2K EEPROM（AT24C01、AT24C02）=============
+             -===============
+  133          /*
+  134          void EEPROM_WriteNbyte(u8 addr, u8 *p, u8 number)          //  WordAddress,First Data Address,Byte lenth 
+  135                                                                      //F0=0,right, F0=1,error
+  136          {
+  137              I2C_Start();
+  138              I2C_WriteAbyte(SLAW);
+  139              I2C_Check_ACK();
+  140              if(!F0)
+  141              {
+  142                  I2C_WriteAbyte(addr);
+  143                  I2C_Check_ACK();
+  144                  if(!F0)
+  145                  {
+  146                      do
+  147                      {
+  148                          I2C_WriteAbyte(*p);     p++;
+  149                          I2C_Check_ACK();
+  150                          if(F0)  break;
+  151                      }
+  152                      while(--number);
+  153                  }
+  154              }
+  155              I2C_Stop();
+  156          }
+  157          */
+  158          //=======================================================================================================
+             -================
+  159          //============================多字节读取函数===该函数只适用于1K 2K EEPROM（AT24C01、AT24C02）============
+             -================
+  160          /*
+  161          void EEPROM_ReadNbyte(u8 addr, u8 *p, u8 number)       //  WordAddress,First Data Address,Byte lenth 
+  162          {
+  163              I2C_Start();
+  164              I2C_WriteAbyte(SLAW);
+  165              I2C_Check_ACK();
+  166              if(!F0)
+  167              {
+  168                  I2C_WriteAbyte(addr);
+  169                  I2C_Check_ACK();
+  170                  if(!F0)
+  171                  {
+  172                      I2C_Start();
+  173                      I2C_WriteAbyte(SLAR);
+  174                      I2C_Check_ACK();
+  175                      if(!F0)
+  176                      {
+  177                          do
+  178                          {
+  179                              *p = I2C_ReadAbyte();   p++;
+  180                              if(number != 1)     S_ACK();    //send ACK
+  181                          }
+C251 COMPILER V5.57.0,  AT24Cxx                                                            10/05/23  03:12:22  PAGE 4   
+
+  182                          while(--number);
+  183                          S_NoACK();          //send no ACK
+  184                      }
+  185                  }
+  186              }
+  187              I2C_Stop();
+  188          }
+  189          */
+  190          //=======================================================================================================
+             -=================
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       304     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------          6
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

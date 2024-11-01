@@ -1,0 +1,6 @@
+".\Objects\main.obj" 
+TO ".\Objects\独立按键" 
+PRINT(".\Listings\独立按键.map") CASE 
+REMOVEUNUSED 
+CLASSES (EDATA (0x0-0xFFF), 
+HDATA (0x0-0xFFF)) 

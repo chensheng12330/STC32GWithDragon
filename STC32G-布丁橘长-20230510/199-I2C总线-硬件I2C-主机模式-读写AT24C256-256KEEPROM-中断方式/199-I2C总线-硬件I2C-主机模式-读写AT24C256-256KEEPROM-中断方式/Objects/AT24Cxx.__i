@@ -1,0 +1,1 @@
+"AT24Cxx.c" XSMALL INTR2 BROWSE DEBUG PRINT(.\Listings\AT24Cxx.lst) TABS (2) OBJECT(.\Objects\AT24Cxx.obj)

@@ -1,0 +1,233 @@
+C251 COMPILER V5.57.0,  main                                                               15/03/23  21:09:12  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE main.c XSMALL BROWSE DEBUG PRINT(.\Listings\main.lst) TABS(2
+                    -) OBJECT(.\Objects\main.obj) 
+
+stmt  level    source
+
+    1          //  @²¼¶¡éÙ³¤ 2023/03/14
+    2          //  PWMÊäÈë²¶»ñÊ¾Àý£º¸´Î»Ä£Ê½£¬²¶»ñÏÂ½µÑØµ½ÏÂ½µÑØ£¬»ñÈ¡¼ÆÊýÖµ£¬²¢»»Ëã³ÉÆµÂÊ£¬MAX7219ÊýÂë¹ÜÏÔÊ¾
+    3          //  ·½²¨ÓÉPWM5(P2.0)Êä³ö£¬Ä¬ÈÏÊä³ö500Hz Õ¼¿Õ±È50%·½²¨
+    4          //  MAX7219ÊýÂë¹ÜÄ£¿éÒý½Å¶¨Òå£ºCS = P6^5;DIN = P6^6;CLK = P6^4;£¨¿ÉÔÚMAX7219.hÖÐÐÞ¸Ä£©
+    5          //  ÊµÑé¿ª·¢°å£ºÍÀÁúµ¶Èý.1 @Ö÷Æµ12MHz
+    6          
+    7          #include "stc32g.h"
+    8          #include "config.h"
+    9          #include "MAX7219.h"
+   10          
+   11          #define PWMB_PSC (12 - 1)     // 12·ÖÆµ£¬Ê±ÖÓÖÜÆÚ1us
+   12          #define PWMB_PERIOD_500 2000  // ÖÜÆÚ2ºÁÃë£¬500Hz
+   13          #define PWMB_PERIOD_1K 1000   // ÖÜÆÚ1ºÁÃë£¬1KHz    
+   14          #define PWMB_PERIOD_2K 500    // ÖÜÆÚ500us£¬2KHz
+   15          #define PWMB_PERIOD_5K 200    // ÖÜÆÚ200us£¬5KHz
+   16          
+   17          sbit KEY1 = P3^2;             // °åÔØ°´¼ü£¬P3.2
+   18          sbit KEY2 = P3^3;             // °åÔØ°´¼ü£¬P3.3
+   19          
+   20          void SYS_Ini();               // STC32³õÊ¼»¯ÉèÖÃ
+   21          void SEG_Disp(void);          // ÊýÂë¹ÜÏÔÊ¾
+   22          void PWM_Config();            // PWM³õÊ¼»¯ÉèÖÃ
+   23          void Timer0_Init(void);       // ¶¨Ê±Æ÷0³õÊ¼»¯
+   24          void keyscan();               // °´¼üÉ¨Ãè
+   25          
+   26          int cap;                      // ²¶»ñ²îÖµ
+   27          long int freq;                // ·½²¨ÆµÂÊ
+   28          u8 segdelay;                  // ÊýÂë¹ÜÑÓÊ±¼ÆÊý
+   29          bit B_1ms;                    // 1ms¼ÆÊ±±êÖ¾
+   30          u8 key1delay,key2delay;       // °´¼ü1¡¢°´¼ü2ÑÓÊ±¼ÆÊý
+   31          u16 period;                   // PWMÖÜÆÚ
+   32          u8 number;                    // PWMÖÜÆÚ¶ÔÓ¦µÄÊýÖµ£º0-3 
+   33          bit updateperiod;             // ¸üÐÂÖÜÆÚ±êÖ¾
+   34          
+   35          void main(void)
+   36          {
+   37   1        SYS_Ini();                  // STC32³õÊ¼»¯ÉèÖÃ
+   38   1        PWM_Config();               // PWM³õÊ¼»¯ÉèÖÃ
+   39   1        Timer0_Init();              // ¶¨Ê±Æ÷0³õÊ¼»¯
+   40   1        EA = 1;                     // Ê¹ÄÜEA×ÜÖÐ¶Ï
+   41   1        MAX7219_Ini();              // MAX7219³õÊ¼»¯
+   42   1        SEG_Disp();                 // ÊýÂë¹ÜÏÔÊ¾
+   43   1        period = PWMB_PERIOD_500;   // ³õÊ¼PWMÆµÂÊ500Hz
+   44   1        
+   45   1        while (1)
+   46   1        {
+   47   2          if(segdelay == 200)   // Ã¿200ºÁÃëË¢ÐÂÒ»´ÎÊýÂë¹Ü
+   48   2          {
+   49   3            freq = (MAIN_Fosc / cap) + 1;   // ¼ÆËãÆµÂÊ
+   50   3            SEG_Disp();           // Ë¢ÐÂÊýÂë¹Ü
+   51   3            segdelay = 0;
+   52   3          }
+   53   2        }
+   54   1      }
+   55          void SYS_Ini()                // STC32³õÊ¼»¯ÉèÖÃ
+   56          {
+   57   1        EAXFR = 1;                  // Ê¹ÄÜ·ÃÎÊ XFR
+   58   1        CKCON = 0x00;               // ÉèÖÃÍâ²¿Êý¾Ý×ÜÏßËÙ¶ÈÎª×î¿ì
+C251 COMPILER V5.57.0,  main                                                               15/03/23  21:09:12  PAGE 2   
+
+   59   1        WTST = 0x00;                // ÉèÖÃ³ÌÐò´úÂëµÈ´ý²ÎÊý£¬¸³ÖµÎª 0 ¿É½« CPU Ö´ÐÐ³ÌÐòµÄËÙ¶ÈÉèÖÃÎª×î¿ì
+   60   1        
+   61   1        P0M1 = 0x00;P0M0 = 0x00;    // ÉèÖÃP0¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   62   1        P1M1 = 0xFF;P1M0 = 0x00;    // ÉèÖÃP1¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   63   1        P2M1 = 0x00;P2M0 = 0x00;    // ÉèÖÃP2¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   64   1        P3M1 = 0x00;P3M0 = 0x00;    // ÉèÖÃP3¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   65   1        P4M1 = 0x00;P4M0 = 0x00;    // ÉèÖÃP4¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   66   1        P5M1 = 0x00;P5M0 = 0x00;    // ÉèÖÃP5¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   67   1        P6M1 = 0x00;P6M0 = 0x00;    // ÉèÖÃP6¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   68   1        P7M1 = 0x00;P7M0 = 0x00;    // ÉèÖÃP7¿ÚÎª×¼Ë«Ïò¿ÚÄ£Ê½ //00£º×¼Ë«Ïò¿Ú 01£ºÍÆÍìÊä³ö 10£º¸ß×èÊäÈë 11£º¿ªÂ©Êä³
+             -ö
+   69   1      }
+   70          void PWM_ISR() interrupt 26
+   71          {
+   72   1        if (PWMA_SR1 & 0X02)        // µ±²¶»ñÖÐ¶Ï±êÖ¾ÖÃ1
+   73   1        { 
+   74   2          PWMA_SR1 &= ~0X02;        // ÇåÁã²¶»ñÖÐ¶Ï±êÖ¾
+   75   2          cap =(PWMA_CCR1H << 8) + PWMA_CCR1L;  // ¶ÁÈ¡²¶»ñ¼ÆÊýÖµ
+   76   2        }
+   77   1      }
+   78          void PWM_Config()             // PWM³õÊ¼»¯ÉèÖÃ
+   79          {
+   80   1      //--------------------------PWMAÉèÖÃ-²¶»ñÏÂ½µÑØ---------------------------------- 
+   81   1        PWMA_ENO = 0x00;            // ¹Ø±Õ²¶»ñ/Êä³öÍ¨µÀ
+   82   1        PWMA_CCER1 = 0x00;          // ¹Ø±ÕÍ¨µÀ
+   83   1        PWMA_CCMR1 = 0x01;          // Í¨µÀÄ£Ê½ÅäÖÃÎªÊäÈë
+   84   1        PWMA_SMCR = 0x54;           // ÊäÈë1£¬¸´Î»Ä£Ê½
+   85   1        PWMA_CCER1 = 0x01;          // Ê¹ÄÜ²¶»ñ/±È½ÏÍ¨µÀ1
+   86   1      //  PWMA_CCER1 |= 0x00;         // ÉèÖÃ²¶»ñ/±È½ÏÍ¨µÀ1ÉÏÉýÑØ²¶»ñ
+   87   1        PWMA_CCER1 |= 0x20;         // ÉèÖÃ²¶»ñ/±È½ÏÍ¨µÀ1ÏÂ½µÑØ²¶»ñ
+   88   1      
+   89   1        PWMA_IER = 0x02;            // Ê¹ÄÜ²¶»ñÖÐ¶Ï
+   90   1        PWMA_CR1 |= 0x01;         // Ê¹ÄÜPWMA¼ÆÊýÆ÷£¬²¶»ñÉÏÉýÑØ
+   91   1        
+   92   1      //------------PWMBÉèÖÃ-PWM5(P2.0)Êä³öÒ»Â·PWM£º500Hz-5KHz£¬Õ¼¿Õ±È£º50%-------------------
+   93   1        PWMB_PSCRH = (u16)(PWMB_PSC >> 8);
+   94   1        PWMB_PSCRL = (u16)(PWMB_PSC); // Ô¤·ÖÆµ
+   95   1        
+   96   1        PWMB_CCER1 = 0x00;          // ¹Ø±ÕÍ¨µÀ
+   97   1        PWMB_CCMR1 = 0x68;          // Í¨µÀÄ£Ê½ÅäÖÃÎªÊä³ö£¬PWMÄ£Ê½1
+   98   1        PWMB_CCER1 = 0x05;          // Ê¹ÄÜ²¶»ñ/±È½ÏÍ¨µÀ5£¬Ê¹ÄÜCCRÔ¤×°ÔØ
+   99   1      
+  100   1        PWMB_CCR5H = (u16)(PWMB_PERIOD_500 >> 1 >> 8);
+  101   1        PWMB_CCR5L = (u16)(PWMB_PERIOD_500 >> 1); // ÉèÖÃÕ¼¿Õ±È50%
+  102   1        
+  103   1        PWMB_ARRH = (u16)(PWMB_PERIOD_500 >> 8);
+  104   1        PWMB_ARRL = (u16)(PWMB_PERIOD_500); // ÉèÖÃÖÜÆÚ
+  105   1        
+  106   1        PWMB_ENO = 0x01;            // Ê¹ÄÜPWM5Êä³ö
+  107   1        PWMB_BKR = 0x80;            // Ê¹ÄÜPWMBÖ÷Êä³ö
+  108   1        PWMB_CR1 |= 0x01;           // Ê¹ÄÜPWMB¼ÆÊýÆ÷
+  109   1      }
+  110          void Timer0_Isr(void) interrupt 1
+  111          {
+  112   1        B_1ms = 1;                  // 1ºÁÃëµ½
+  113   1        segdelay++;
+  114   1        keyscan();
+  115   1        if(updateperiod == 1)       // ¸üÐÂÖÜÆÚ±êÖ¾ÖÃ1Ê±
+  116   1        {
+C251 COMPILER V5.57.0,  main                                                               15/03/23  21:09:12  PAGE 3   
+
+  117   2          PWMB_ARRH = (u16)(period >> 8);
+  118   2          PWMB_ARRL = (u16)(period);        // ¸üÐÂÖÜÆÚ
+  119   2          PWMB_CCR5H = (u16)(period >> 1 >> 8);
+  120   2          PWMB_CCR5L = (u16)(period >> 1);  // ¸üÐÂÕ¼¿Õ±È
+  121   2          updateperiod = 0;         // ÇåÁã¸üÐÂÖÜÆÚ±êÖ¾
+  122   2        }
+  123   1      }
+  124          void Timer0_Init(void)        //1ºÁÃë@12.000MHz
+  125          {
+  126   1        AUXR |= 0x80;               //¶¨Ê±Æ÷Ê±ÖÓ1TÄ£Ê½
+  127   1        TMOD &= 0xF0;               //ÉèÖÃ¶¨Ê±Æ÷Ä£Ê½
+  128   1        TL0 = 0x20;                 //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+  129   1        TH0 = 0xD1;                 //ÉèÖÃ¶¨Ê±³õÊ¼Öµ
+  130   1        TF0 = 0;                    //Çå³ýTF0±êÖ¾
+  131   1        TR0 = 1;                    //¶¨Ê±Æ÷0¿ªÊ¼¼ÆÊý
+  132   1        ET0 = 1;                    //Ê¹ÄÜ¶¨Ê±Æ÷0ÖÐ¶Ï
+  133   1      }
+  134          void keyscan()
+  135          {
+  136   1      //--------------------KEY1--------------------------------------------------------------
+  137   1        if(KEY1 == 0)               // °´¼ü1°´ÏÂ
+  138   1        {
+  139   2          if(B_1ms == 1)            // 1ºÁÃëµ½
+  140   2          {
+  141   3            key1delay++;            // °´¼ü1¼ÆÊ±+1
+  142   3            B_1ms = 0;              // ÇåÁã°´¼ü1ÑÓÊ±¼ÆÊý
+  143   3          }
+  144   2          if(KEY1 == 0 && key1delay == 10)  // °´¼ü1°´ÏÂ£¬²¢ÇÒÑÓÊ±10ºÁÃëµ½
+  145   2          {
+  146   3            if(number > 0) number -= 1;     // number-1£¬number¶ÔÓ¦4¸öÆµÂÊ£º500Hz£¬1K£¬2K£¬5K
+  147   3            updateperiod = 1;               // ¸üÐÂÖÜÆÚ±êÖ¾ÖÃ1
+  148   3          }
+  149   2        }
+  150   1        if(KEY1 == 1) key1delay = 0;        // ËÉ¿ª°´¼üºó£¬ÇåÁã°´¼ü1¼ÆÊ±
+  151   1      //--------------------KEY2---------------------------------------------------------------
+  152   1        if(KEY2 == 0)               // °´¼ü2°´ÏÂ
+  153   1        {
+  154   2          if(B_1ms == 1)            // 1ºÁÃëµ½
+  155   2          {
+  156   3            key2delay++;            // °´¼ü2¼ÆÊ±+1
+  157   3            B_1ms = 0;              // ÇåÁã°´¼ü2ÑÓÊ±¼ÆÊý
+  158   3          }
+  159   2          if(KEY2 == 0 && key2delay == 10)  // °´¼ü1°´ÏÂ£¬²¢ÇÒÑÓÊ±10ºÁÃëµ½
+  160   2          {
+  161   3            if(number < 3) number += 1;     // number+1£¬number¶ÔÓ¦4¸öÆµÂÊ£º500Hz£¬1K£¬2K£¬5K
+  162   3            updateperiod = 1;               // ¸üÐÂÖÜÆÚ±êÖ¾ÖÃ1
+  163   3          }
+  164   2        }
+  165   1        if(KEY2 == 1) key2delay = 0;        // ËÉ¿ª°´¼ü2ºó£¬ÇåÁã°´¼ü2¼ÆÊ±
+  166   1        switch(number)                      
+  167   1        {
+  168   2          case 0:period = PWMB_PERIOD_500;break;  // number = 0: 500Hz
+  169   2          case 1:period = PWMB_PERIOD_1K;break;   // number = 1: 1KHz
+  170   2          case 2:period = PWMB_PERIOD_2K;break;   // number = 2: 2KHz
+  171   2          case 3:period = PWMB_PERIOD_5K;break;   // number = 3: 5KHz
+  172   2          default:break;
+  173   2        }
+  174   1      }
+  175          void SEG_Disp(void)           // MAX7219ÊýÂë¹ÜÏÔÊ¾º¯Êý                
+  176          {             
+  177   1        Write7219(8,15);            // ×óÆðµÚ1Î»Ï¨Ãð
+  178   1        Write7219(7,15);            // ×óÆðµÚ2Î»Ï¨Ãð
+  179   1        Write7219(6,15);            // ×óÆðµÚ3Î»Ï¨Ãð
+  180   1        Write7219(5,15);            // ×óÆðµÚ4Î»Ï¨Ãð
+  181   1        Write7219(4,(u16)((freq / 1000)%10));   // ×óÆðµÚ5Î»ÏÔÊ¾Âö³åÇ§Î»
+  182   1        Write7219(3,(u16)((freq / 100)%10));    // ×óÆðµÚ6Î»ÏÔÊ¾Âö³å°ÙÎ»
+C251 COMPILER V5.57.0,  main                                                               15/03/23  21:09:12  PAGE 4   
+
+  183   1        Write7219(2,(u16)((freq / 10)%10));     // ×óÆðµÚ7Î»ÏÔÊ¾Âö³åÊ®Î»
+  184   1        Write7219(1,(u16)(freq % 10));          // ×óÆðµÚ8Î»ÏÔÊ¾Âö³å¸öÎ»
+  185   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       823     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =        12     ------
+  bit size             =         2     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

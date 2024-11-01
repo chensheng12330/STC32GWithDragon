@@ -1,0 +1,115 @@
+C251 COMPILER V5.57.0,  main                                                               21/02/23  22:11:54  PAGE 1   
+
+
+C251 COMPILER V5.57.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\SoftWare\KeilC251\C251\BIN\C251.EXE main.c XSMALL BROWSE DEBUG PRINT(.\Listings\main.lst) TABS(2
+                    -) OBJECT(.\Objects\main.obj) 
+
+stmt  level    source
+
+    1          //    @布丁橘长 2023/02/16
+    2          //    数码管滚屏显示，第一屏：HELLO，第二屏：20230216，第三屏：AbCdEF
+    3          //    使用定时器0-模式0-1T模式-预分频，定时200毫秒
+    4          //    8位共阳极数码管模块-74HC595级联驱动，数码管模块引脚定义：DS(DIO):P6.6 SH(SCK):P6.5 ST(RCK):P6.4
+    5          //    实验开发板：STC32G12K128-LQFP64 屠龙刀三.1 主频12MHz
+    6          
+    7          #include <STC32G.H>
+    8          #include "config.h"
+    9          #include "seg595.h"
+   10          
+   11          void Timer0_Init(void);   //定时器0初始化函数声明
+   12          
+   13          u8 number;        //数码管显示的数字
+   14          //                  灭 灭  H  E  L L  0 灭
+   15          u8 segstring[24] = {22,22,16,14,17,17,0,22,     //第1屏：HELL0
+   16          //                  2  0  2  3  0  2  1  6
+   17                              2 ,0 ,2 ,3 ,0 ,2 ,1 ,6,     //第2屏：20230216
+   18          //                  灭  A  b C  d  E  F  灭
+   19                              22,10,11,12,13,14,15,22};   //第3屏：AbCdEF
+   20          u8 segdig;        //数组位
+   21          u8 segdelay;      //数码管显示停留时间
+   22          void main()
+   23          { 
+   24   1        u8 i;
+   25   1        EAXFR = 1;      // 使能访问 XFR
+   26   1        CKCON = 0x00;   // 设置外部数据总线速度为最快
+   27   1        WTST = 0x00;    // 设置程序代码等待参数，等待时间为0个时钟，CPU执行程序速度最快
+   28   1      
+   29   1        P0M1 = 0x00;P0M0 = 0x00;    //设置P0口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   30   1        P1M1 = 0x00;P1M0 = 0x00;    //设置P1口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   31   1        P2M1 = 0x00;P2M0 = 0x00;    //设置P2口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   32   1        P3M1 = 0x00;P3M0 = 0x00;    //设置P3口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   33   1        P4M1 = 0x00;P4M0 = 0x00;    //设置P4口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   34   1        P5M1 = 0x00;P5M0 = 0x00;    //设置P5口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   35   1        P6M1 = 0x00;P6M0 = 0x00;    //设置P6口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   36   1        P7M1 = 0x00;P7M0 = 0x00;    //设置P7口为准双向口模式 //00：准双向口 01：推挽输出 10：高阻输入 11：开漏输出
+   37   1        
+   38   1        Timer0_Init();    //定时器0初始化
+   39   1        EA = 1;           //使能总中断  
+   40   1        segdig = 0;
+   41   1        while(1)
+   42   1        {
+   43   2          for(i = 0;i < 8;i++)                            
+   44   2          {
+   45   3            if(i+segdig <= 23)
+   46   3            {
+   47   4              SEG_Disp(segstring[i+segdig],(u8)(i+1));    //第1-8位分别显示，数组第i+segdig个字符
+   48   4            }                                             //例：segdig=0时，8位分别显示数组0-7个字符 “  HELL0 ”
+   49   3                                                          //    segdig=2时，8位分别显示数组2-10个字符“HELL0 20”
+   50   3                                                          //    segdig=4时，8位分别显示数组4-12个字符“LL0 2023”
+   51   3            if(i+segdig > 23)                 
+   52   3            {
+   53   4              SEG_Disp(segstring[i+segdig-23],(u8)(i+1)); //当i+segdig超过数组24位时，超出部分从数组0个元素开始
+   54   4            }
+   55   3          }
+   56   2        }
+   57   1      }
+   58          void Timer0_Isr(void) interrupt 1   
+C251 COMPILER V5.57.0,  main                                                               21/02/23  22:11:54  PAGE 2   
+
+   59          {
+   60   1        if((segdig == 0) || (segdig == 8) || (segdig == 16))//每一屏数据，停留显示
+   61   1        {
+   62   2          segdelay++;                                       //开始计时
+   63   2        }
+   64   1        if(segdelay == 10) segdelay = 0;                    //计时200毫秒*10
+   65   1        if(segdelay == 0) segdig++;                         //计时结束后，开始滚屏
+   66   1        if(segdig > 23) segdig = 0;                         //滚屏24位后清零
+   67   1      }
+   68          
+   69          void Timer0_Init(void)    //200毫秒@12.000MHz
+   70          {
+   71   1        TM0PS = 0x24;           //设置定时器时钟预分频 ( 注意:并非所有系列都有此寄存器,详情请查看数据手册 )
+   72   1        AUXR |= 0x80;           //定时器时钟1T模式
+   73   1        TMOD &= 0xF0;           //设置定时器模式
+   74   1        TL0 = 0x9F;             //设置定时初始值
+   75   1        TH0 = 0x02;             //设置定时初始值
+   76   1        TF0 = 0;                //清除TF0标志
+   77   1        TR0 = 1;                //定时器0开始计时
+   78   1        ET0 = 1;                //使能定时器0中断
+   79   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       242     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =        27     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        28     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

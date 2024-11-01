@@ -1,0 +1,46 @@
+/*
+
+    本程序的代码是以FreeRTOS官方的202112.00版本（内核版本为V10.4.6）的原始代码为基础进行全新移植
+    目前STC官方命名的本版本号是：V1.0.2
+    FreeRTOSConfig.h文件中的中文注释引用自网友泽文提供的移植版本，在此对泽文、小宇等热心网友表示感谢！
+    本移植代码基于我公司的STC32G12K128系列单片机，可完美支持STC32G12K128的LARGE模式(64K代码)和
+    HUGE模式(128K)，简单设置即可选择不同的ROM模式
+    
+    LARGE模式的配置方法：
+    1. FreeRTOSConfig.h 里面配置configUSE_ROMHUGE 为 0
+    2. FreeRTOS_Demo项目的其它设置维持不变
+    
+    HUGE模式的配置方式:
+    1. FreeRTOSConfig.h 里面配置configUSE_ROMHUGE 为 1
+    2. 点击Keil工程配置按钮【Options for Target】-> 【Target】-> 【Exeternal Memory】-> 
+       【ROM】 起始地址：0xFE0000 大小：0x20000（注意：LARGE模式一定不要设置此项）
+    3. FreeRTOS_Demo项目的其它设置维持不变
+    
+    本Demo程序的默认系统时钟为24MHz，可以根据需要自己调整FreeRTOSConfig.h 里面的MAIN_Fosc配置值
+    当前方案的任务切换耗时2.5uS（测试频率24MHz）
+    本Demo程序可同时支持软件模拟仿真和硬件真实运行，无需额外的设置
+    本Demo程序已实现FreeRTOS的抢占模式和时间片轮询模式，抢占模式在中断服务程序中直接切换任务
+
+	库函数版本目录结构：
+	Sources (源程序目录)
+	|----Task (任务程序目录)
+	|    |----inc (任务程序头文件目录)
+	|    |----src (任务程序源代码目录)
+	|----Driver (硬件驱动程序目录)
+	|    |----inc (驱动程序头文件目录)
+	|    |----isr (驱动中断程序目录)
+	|    |----src (驱动程序源代码目录)
+	|----User (用户程序及配置文件目录)
+	|    |----include (用户程序头文件目录)
+	|----FreeRTOS (FreeRTOS核心代码目录)
+	|----CANOpen (CANOpen核心代码目录)
+
+    CANOpen例程说明：
+    1. 本例程基于STC32G核心转接板（屠龙刀）进行编写测试；
+    2. CAN1(P5.0,P5.1)、CAN2(P5.2,P5.3)通过收发器连接到同一个总线上；
+    3. 第一次按P5.4(RST)按键，CAN1发送启动命令让节点进入操作状态；
+    4. 之后再按P5.4(RST)按键，CAN1发送CANID 0x20F:xx 报文，xx值控制P6口LED灯状态，每按一次按键 xx 加1；
+    5. 按板子上P3.2,P3.3,P3.4,P3.5按键，总线可以接收到CANID 0x18F:01，0x18F:02，0x18F:04，0x18F:08报文；
+    6. 串口1(P1.6,P1.7)打印报文收发信息。
+
+*/

@@ -1,0 +1,8 @@
+".\Objects\main.obj",
+".\Objects\Seg595.obj",
+".\Objects\key_multi_timer.obj" 
+TO ".\Objects\多功能按键" 
+PRINT(".\Listings\多功能按键.map") CASE 
+REMOVEUNUSED 
+CLASSES (EDATA (0x0-0xFFF), 
+HDATA (0x0-0xFFF)) 
